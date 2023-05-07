@@ -17,7 +17,7 @@ public class SwaggerConfig {
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)
                 .select()
-                .apis(RequestHandlerSelectors.basePackage("com.example.sprintplannerapi.controller"))
+                .apis(RequestHandlerSelectors.basePackage("com.tfg.sprintplannerapi.controller"))
                 .paths(PathSelectors.any())
                 .build()
                 .apiInfo(apiInfo());
@@ -27,7 +27,7 @@ public class SwaggerConfig {
     public ApiInfo apiInfo() {
 
         return new ApiInfoBuilder()
-                .title("API de ejemplo")
+                .title("SprintPlanner API")
                 .description("API para la aplicación SprintPlanner")
                 .version("1.0")
                 .build();

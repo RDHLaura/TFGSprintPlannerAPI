@@ -42,6 +42,7 @@ public class JwtUtilBO {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
+        //TODO probar a descomentar esto
         /**
         // Agregando informacion adicional como "claim"
         var rol = userDetails.getAuthorities().stream().collect(Collectors.toList()).get(0);

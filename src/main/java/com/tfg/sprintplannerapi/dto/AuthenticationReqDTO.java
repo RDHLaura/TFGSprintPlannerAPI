@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 @Data
 @AllArgsConstructor
-public class AutheticationReqDTO implements Serializable {
+public class AuthenticationReqDTO implements Serializable {
 
     private static final long serialVersionUID = 969448392357624487L;
     private String usuario;

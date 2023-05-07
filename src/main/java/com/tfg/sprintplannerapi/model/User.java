@@ -17,11 +17,11 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class User extends Audit{
     private static final long serialVersionUID = -5072505803681612517L;
 
-    @Column(name = "email", nullable = false, length = 100)
+    @Column(name = "email", nullable = false, length = 100, unique = true)
     @NotNull
     private String email;
 
-    @Column(name = "username", nullable = false, length = 50)
+    @Column(name = "username", nullable = false, length = 50, unique = true)
     @NotNull
     private String username;
 
