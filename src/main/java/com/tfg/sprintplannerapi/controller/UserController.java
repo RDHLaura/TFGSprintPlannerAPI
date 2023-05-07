@@ -5,7 +5,7 @@ import com.tfg.sprintplannerapi.bo.UserBO;
 import com.tfg.sprintplannerapi.dto.AutheticationReqDTO;
 import com.tfg.sprintplannerapi.dto.TokenInfoDTO;
 import com.tfg.sprintplannerapi.dto.UserDTO;
-import com.tfg.sprintplannerapi.model.Usuario;
+import com.tfg.sprintplannerapi.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +45,7 @@ public class UserController {
         logger.info("Datos de los Permisos {}", auth.getAuthorities());
         logger.info("Esta autenticado {}", auth.isAuthenticated());
 
-        List<Usuario> listUser = userBO.findAll();
+        List<User> listUser = userBO.findAll();
         return listUser.isEmpty()?
             ResponseEntity.noContent().build():
             ResponseEntity.ok(listUser);
@@ -53,7 +53,7 @@ public class UserController {
 
     @PostMapping("/public/user")
     public ResponseEntity<?> getUsers(@RequestBody UserDTO newuser) {
-        Usuario saved = userBO.createUser(newuser);
+        User saved = userBO.createUser(newuser);
         /** si el usuario se crea correctamente, se autentica y se envia el token */
         if(saved != null){
             TokenInfoDTO token = authenticate(new AutheticationReqDTO(newuser.getUsername(), newuser.getPassword()));

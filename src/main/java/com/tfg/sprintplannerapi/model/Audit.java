@@ -12,15 +12,14 @@ import java.time.Instant;
 import java.util.Date;
 
 @Data
+@MappedSuperclass
 public class Audit implements Serializable {
-
 
     private static final long serialVersionUID = -2680969231588318759L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", unique = true, nullable = false)
     private Long id;
-
 
     @Column(name = "deleted")
     private Integer deleted = 0;
@@ -75,7 +74,7 @@ public class Audit implements Serializable {
                 .getPrincipal()
                 .equals("anonymousUser")){
             userLoggedId = Long.valueOf(
-                    ((Usuario)SecurityContextHolder
+                    ((User)SecurityContextHolder
                             .getContext()
                             .getAuthentication()
                             .getPrincipal()

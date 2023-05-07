@@ -13,14 +13,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "users")
-@XmlRootElement
-@SuppressWarnings("unused")
-public class Usuario {
+
+public class User extends Audit{
     private static final long serialVersionUID = -5072505803681612517L;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", unique = true, nullable = false)
-    private Long id;
+
     @Column(name = "email", nullable = false, length = 100)
     @NotNull
     private String email;
