@@ -1,9 +1,10 @@
 package com.tfg.sprintplannerapi.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tfg.sprintplannerapi.utils.Constants;
 import lombok.Data;
 import org.springframework.security.core.context.SecurityContextHolder;
-
+import org.springframework.security.core.userdetails.User;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.text.ParseException;
@@ -27,27 +28,29 @@ public class Audit implements Serializable {
     /**When object was created*/
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "create_time", nullable = false, length = 19, updatable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Europe/Madrid")
     private Date createDate;
 
     /**When object was last updated. */
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "update_time", length = 19)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Europe/Madrid")
     private Date updateDate;
 
     /**Creator of the object*/
-    @Column(name = "create_user_id", length = 19)
-    private Long createdBy;
+    @Column(name = "create_user_id", length = 50)
+    private String createdBy = "anonymous";
 
     /** Last modifier of the object */
-    @Column(name = "update_user_id", length = 19)
-    private Long updatedBy;
+    @Column(name = "update_user_id", length = 50)
+    private String updatedBy = null;
 
     /**Update Audit Info*/
     @PreUpdate
     public void updateAuditInfo() throws ParseException {
         this.updateDate = getNow();
         if(SecurityContextHolder.getContext().getAuthentication().getPrincipal()!= null){
-            this.updatedBy = getUserLoggedId();
+            this.updatedBy = getUserLoggedEmail();
         }
     }
 
@@ -59,29 +62,26 @@ public class Audit implements Serializable {
         this.updateDate = now;
 
         if(SecurityContextHolder.getContext().getAuthentication().getPrincipal()!= null) {
-            this.createdBy = getUserLoggedId();
+            this.createdBy = getUserLoggedEmail();
             this.updatedBy = getCreatedBy();
         }
 
     }
 
-    private Long getUserLoggedId (){
+    private String getUserLoggedEmail(){
 
-        Long userLoggedId = Constants.ANONYMOUS_USER;
+        String userLoggedEmail = "anonymous";
         if (!SecurityContextHolder
                 .getContext()
                 .getAuthentication()
                 .getPrincipal()
                 .equals("anonymousUser")){
-            userLoggedId = Long.valueOf(
-                    ((User)SecurityContextHolder
-                            .getContext()
-                            .getAuthentication()
-                            .getPrincipal()
-                    ).getUsername()
-            );
+            User userLogged = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            String userName = userLogged.getUsername();
+            userLoggedEmail = userName;
+
         }
-        return userLoggedId;
+        return userLoggedEmail;
 
     }
     private Date getNow () throws ParseException{

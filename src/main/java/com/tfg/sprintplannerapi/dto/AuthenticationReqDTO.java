@@ -10,6 +10,6 @@ import java.io.Serializable;
 public class AuthenticationReqDTO implements Serializable {
 
     private static final long serialVersionUID = 969448392357624487L;
-    private String usuario;
+    private String email;
     private String clave;
 }
