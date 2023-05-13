@@ -9,12 +9,18 @@ import com.tfg.sprintplannerapi.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
@@ -76,6 +82,28 @@ public class UserController {
                 ResponseEntity.ok(user);
     }
 
+    @GetMapping("/users/{id}/avatar")
+    public ResponseEntity<Resource> getUser(@PathVariable Long id) {
+        User user = userBO.findById(id).orElse(null);
+        String avatarName = user.getAvatar();
+        if(avatarName != null){
+            Path imagePath = Paths.get("src//main//resources//static//uploads//" + avatarName);
+            Resource imageResource;
+            try {
+                imageResource = new FileSystemResource(imagePath);
+                if (imageResource.exists()) {
+                    return ResponseEntity.ok()
+                            .contentType(MediaType.IMAGE_JPEG) // Cambia el tipo de contenido según el formato de la imagen
+                            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + avatarName + "\"")
+                            .body(imageResource);
+                }
+            } catch (Exception e) {
+                // Manejo del error
+            }
+        }
+        return ResponseEntity.notFound().build();
+    }
+
     /**
      * Actualiza el avatar del usuario
      * @param file
@@ -89,7 +117,6 @@ public class UserController {
         return (updated) ?
                 ResponseEntity.ok("imagen actualizada") :
                 ResponseEntity.badRequest().build();
-
     }
 
 

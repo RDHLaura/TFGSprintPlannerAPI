@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -47,18 +49,7 @@ public class UserBO extends BaseBO<User, Long, UserRepository> {
         return userRepository.save(newUser);
     }
 
-    public Boolean updateImage (MultipartFile image) {
-        var auth =  SecurityContextHolder.getContext().getAuthentication();
-        User userLogged = userRepository.findByEmailIgnoreCase(auth.getName());
-        String imageSaved = uploadImage(image);
 
-        if (imageSaved != null) {
-            userLogged.setAvatar(imageSaved);
-           // userLogged.setUpdatedBy(userLogged.getId());
-            return true;
-        }
-        return false;
-    }
 
 
     /** Función que autentica un usuario por el username y la contraseña y devuelve un token */
@@ -77,7 +68,17 @@ public class UserBO extends BaseBO<User, Long, UserRepository> {
             return null;
         }
     }
+    public Boolean updateImage (MultipartFile image) {
+        var auth =  SecurityContextHolder.getContext().getAuthentication();
+        User userLogged = userRepository.findByEmailIgnoreCase(auth.getName());
+        String imageSaved = uploadImage(image) ;
 
+        if (imageSaved != null) {
+            userLogged.setAvatar(imageSaved);
+            return true;
+        }
+        return false;
+    }
     /** Carga la imagen y devuelve su ruta */
     public String uploadImage( MultipartFile image){
         if(!image.isEmpty()){
@@ -85,14 +86,35 @@ public class UserBO extends BaseBO<User, Long, UserRepository> {
             String absoluteRoute = directoryImage.toFile().getAbsolutePath();
             try{
                 byte[] byteImg = image.getBytes();
-                Path imageRoute = Paths.get(absoluteRoute + "//" + image.getOriginalFilename());
+                String uniqueFileName = generateUniqueFileName(image.getOriginalFilename());
+
+                Path imageRoute = Paths.get(absoluteRoute + "//" + uniqueFileName);
                 Files.write(imageRoute,byteImg );
 
-                return image.getOriginalFilename();
+                return uniqueFileName;
             }catch (IOException e){
                 return null;
             }
         }
         return null;
+    }
+
+
+    private String generateUniqueFileName(String originalFilename) {
+        long timestamp = System.currentTimeMillis();
+        String uniqueId = UUID.randomUUID().toString();   // Generar un identificador único
+        String fileExtension = extractFileExtension(originalFilename);
+
+        String uniqueFileName = timestamp + "-" + uniqueId + fileExtension;
+
+        return uniqueFileName;
+    }
+
+    private String extractFileExtension(String filename) {
+        int extensionIndex = filename.lastIndexOf('.');
+        if (extensionIndex > 0 && extensionIndex < filename.length() - 1) {
+            return filename.substring(extensionIndex);
+        }
+        return "";
     }
 }
