@@ -7,6 +7,7 @@ import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+@Transactional
 public abstract class BaseBO <T, ID, R extends JpaRepository<T, ID>> {
 
     @Autowired

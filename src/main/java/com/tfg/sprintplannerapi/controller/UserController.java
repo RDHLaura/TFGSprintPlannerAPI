@@ -1,6 +1,7 @@
 package com.tfg.sprintplannerapi.controller;
 
 
+import com.tfg.sprintplannerapi.bo.ImageBO;
 import com.tfg.sprintplannerapi.bo.UserBO;
 import com.tfg.sprintplannerapi.dto.AuthenticationReqDTO;
 import com.tfg.sprintplannerapi.dto.TokenInfoDTO;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,47 +26,17 @@ import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
-@RequestMapping("")
+@RequestMapping("users")
 public class UserController {
     @Autowired private UserBO userBO;
+    @Autowired private ImageBO imageBO;
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
-
-
-    /**
-     * Ruta pública que registra a un usuario y le devuelve un token
-     * @param newuser UserDTO
-     * @return código 200 + token ó  400
-     */
-    @PostMapping("/public/register")
-    public ResponseEntity<?> postUser(@RequestBody UserDTO newuser) {
-        User saved = userBO.createUser(newuser);
-
-        if(saved != null){
-            TokenInfoDTO token = userBO.authenticate(new AuthenticationReqDTO(newuser.getEmail(), newuser.getPassword()));
-            return ResponseEntity.ok(token);
-        }
-        return ResponseEntity.badRequest().build();
-    }
-
-    /**
-     * Función que devuelve un nuevo token a un usuario registrado
-     * @param authenticationReq AuthenticationReqDTO
-     * @return
-     */
-    @PostMapping("/public/authenticate")
-    public ResponseEntity<?> getToken(@RequestBody AuthenticationReqDTO authenticationReq) {
-        logger.info("Autenticando al usuario {}", authenticationReq.getEmail());
-        TokenInfoDTO token = userBO.authenticate(authenticationReq);
-        return (token == null) ?
-                ResponseEntity.badRequest().build() :
-                ResponseEntity.ok(token);
-    }
 
     /**
      * Acceso a autenticados, lista la lista de usuarios
      * @return 200 + lista de usuarios ó 204
      */
-    @GetMapping("/users")
+    @GetMapping("/")
     public ResponseEntity<?> getAllUsers() {
 
         List<User> listUser = userBO.findAll();
@@ -73,33 +45,27 @@ public class UserController {
                 ResponseEntity.ok(listUser);
     }
 
-    @GetMapping("/user/{id}")
-    public ResponseEntity<User> getOneUser(@RequestParam Long id) {
-        //TODO devolver DTO
-        User user = userBO.findById(id).orElse(null);
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> getOneUser() {
+        User user = userBO.findUserLogged();
+        //TODO mapear
+        UserDTO userDTO = new UserDTO(user.getEmail(), user.getUsername(), null);
         return (user == null)?
                 ResponseEntity.notFound().build():
-                ResponseEntity.ok(user);
+                ResponseEntity.ok().body(userDTO);
     }
 
-    @GetMapping("/users/{id}/avatar")
-    public ResponseEntity<Resource> getUser(@PathVariable Long id) {
-        User user = userBO.findById(id).orElse(null);
+    @GetMapping("/avatar")
+    public ResponseEntity<Resource> getUser() {
+        User user = userBO.findUserLogged();
         String avatarName = user.getAvatar();
-        if(avatarName != null){
-            Path imagePath = Paths.get("src//main//resources//static//uploads//" + avatarName);
-            Resource imageResource;
-            try {
-                imageResource = new FileSystemResource(imagePath);
-                if (imageResource.exists()) {
-                    return ResponseEntity.ok()
-                            .contentType(MediaType.IMAGE_JPEG) // Cambia el tipo de contenido según el formato de la imagen
-                            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + avatarName + "\"")
-                            .body(imageResource);
-                }
-            } catch (Exception e) {
-                // Manejo del error
-            }
+        Resource image = imageBO.loadImage(avatarName);
+
+        if (image.exists()) {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG) // Cambia el tipo de contenido según el formato de la imagen
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + avatarName + "\"")
+                    .body(image);
         }
         return ResponseEntity.notFound().build();
     }
@@ -110,8 +76,8 @@ public class UserController {
      * @return
      * @throws IOException
      */
-    @PostMapping("/user/avatar")
-    public ResponseEntity<?> uploadImage(@RequestParam("image") MultipartFile file) throws IOException {
+    @PostMapping("/avatar")
+    public ResponseEntity<?> uploadImage(@RequestParam("image") MultipartFile file) {
 
         Boolean updated = userBO.updateImage(file);
         return (updated) ?
