@@ -5,6 +5,9 @@ import com.tfg.sprintplannerapi.model.states.State;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 @Data
 @Entity
@@ -24,4 +27,11 @@ public class Project extends Audit{
     @ManyToOne
     @JoinColumn(name="users_id")
     private User director = null;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "participations",
+            joinColumns = @JoinColumn(name = "projects_id"),
+            inverseJoinColumns = @JoinColumn(name = "users_id"))
+    List<User> team = new ArrayList<>();
 }

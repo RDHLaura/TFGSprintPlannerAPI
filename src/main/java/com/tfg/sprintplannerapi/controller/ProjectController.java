@@ -2,34 +2,39 @@ package com.tfg.sprintplannerapi.controller;
 
 import com.tfg.sprintplannerapi.bo.ProjectBO;
 import com.tfg.sprintplannerapi.dto.ProjectDTO;
-import com.tfg.sprintplannerapi.model.Project;
+import com.tfg.sprintplannerapi.dto.TeamDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 @RestController
 @RequestMapping("project")
 public class ProjectController {
     @Autowired private ProjectBO projectBO;
-    @GetMapping("")
-    public ResponseEntity<?> getAllProjects() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        List<ProjectDTO> projectDTOS= projectBO.findAllDTO();
-        return (projectDTOS.isEmpty())?
+
+
+    @GetMapping()
+    public ResponseEntity<List<ProjectDTO>> getAllProjects() {
+        List<ProjectDTO> projectsDTO = projectBO.findAllDTO();
+        return (projectsDTO.isEmpty())?
                 ResponseEntity.noContent().build() :
-                ResponseEntity.ok(projectDTOS);
+                ResponseEntity.ok(projectsDTO);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getOneProject(@PathVariable Long id) {
-        //TODO permitir acceso sólo a los que sean: del equipo, director ó creador
-        ProjectDTO projectDTO= projectBO.findOne(id);
-        return (projectDTO == null) ?
-                ResponseEntity.notFound().build() :
-                ResponseEntity.ok(projectDTO);
+    public ResponseEntity<ProjectDTO> getOneProject(@PathVariable Long id) {
+        ProjectDTO projectDTO = projectBO.findOneDTO(id);
+
+        return ResponseEntity.ok(projectDTO);
+    }
+    @GetMapping("/{id}/team")
+    public ResponseEntity<TeamDTO> getOneProjectTeam(@PathVariable Long id) {
+
+        TeamDTO teamDTO= projectBO.findTeam(id);
+        return ResponseEntity.ok(teamDTO);
     }
 
     /**
@@ -39,30 +44,23 @@ public class ProjectController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteOneProject(@PathVariable Long id) {
-        //TODO permitir acceso sólo a los que sean: del equipo, director ó creador
-        Project project = projectBO.findById(id).orElse(null);
-        if (project == null) {
-            return ResponseEntity.notFound().build();
-        }
-        projectBO.delete(project);
-        return ResponseEntity.noContent().build();
+        projectBO.deleteProject(id);
+        return ResponseEntity.ok().build();
     }
 
-    @PostMapping("")
-    public ResponseEntity<?> newProject(@RequestBody ProjectDTO dto) throws NoSuchMethodException {
-        Project project = projectBO.create(dto);
-        return (project == null) ?
-                ResponseEntity.badRequest().build() :
-                ResponseEntity.ok(project);
+    @PostMapping()
+    public ResponseEntity<ProjectDTO> newProject(@RequestBody ProjectDTO dto) {
+        ProjectDTO project = projectBO.create(dto);
+        return ResponseEntity.ok(project);
 
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateProject(@PathVariable Long id, @Validated @RequestBody ProjectDTO dto) throws NoSuchMethodException {
-        Project project = projectBO.update(id, dto);
-        return (project == null) ?
-                ResponseEntity.badRequest().build() :
-                ResponseEntity.ok(project);
 
+            ProjectDTO projectDTO = projectBO.updateProject(id, dto);
+            return (projectDTO == null) ?
+                    ResponseEntity.badRequest().build() :
+                    ResponseEntity.ok(projectDTO);
     }
 }

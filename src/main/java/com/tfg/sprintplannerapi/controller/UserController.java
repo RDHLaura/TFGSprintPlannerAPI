@@ -1,62 +1,65 @@
 package com.tfg.sprintplannerapi.controller;
 
-
 import com.tfg.sprintplannerapi.bo.ImageBO;
 import com.tfg.sprintplannerapi.bo.UserBO;
 import com.tfg.sprintplannerapi.dto.AuthenticationReqDTO;
 import com.tfg.sprintplannerapi.dto.TokenInfoDTO;
 import com.tfg.sprintplannerapi.dto.UserDTO;
 import com.tfg.sprintplannerapi.model.User;
+import com.tfg.sprintplannerapi.security.PermissionFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:3003") //TODO borrar y testear desde el front
 @RestController
-@RequestMapping("users")
+@RequestMapping("")
 public class UserController {
     @Autowired private UserBO userBO;
     @Autowired private ImageBO imageBO;
-    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+    @Autowired private PermissionFilter<User> permissionFilter;
+    private static final Logger LOG = LoggerFactory.getLogger(UserController.class);
 
     /**
-     * Acceso a autenticados, lista la lista de usuarios
+     * Read all users
      * @return 200 + lista de usuarios ó 204
      */
-    @GetMapping("/")
+    @GetMapping("/user")
     public ResponseEntity<?> getAllUsers() {
-
         List<User> listUser = userBO.findAll();
+        Boolean test = permissionFilter.hasPermission(listUser.get(0), "get");
+        LOG.debug("permisionFilter: ", test);
+
         return listUser.isEmpty()?
                 ResponseEntity.noContent().build():
                 ResponseEntity.ok(listUser);
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<UserDTO> getOneUser() {
-        User user = userBO.findUserLogged();
-        //TODO mapear
-        UserDTO userDTO = new UserDTO(user.getEmail(), user.getUsername(), null);
-        return (user == null)?
+    @GetMapping("/user/me")
+    public ResponseEntity<UserDTO> getUserLogged() {
+        UserDTO userDTO = userBO.findUserLoggedDTO();
+        return (userDTO == null)?
                 ResponseEntity.notFound().build():
                 ResponseEntity.ok().body(userDTO);
     }
 
-    @GetMapping("/avatar")
-    public ResponseEntity<Resource> getUser() {
+    @GetMapping("/user/{id}")
+    public ResponseEntity<UserDTO> getOneUser(@PathVariable Long id) {
+        UserDTO userDTO = userBO.findOneDTO(id);
+        return ResponseEntity.ok().body(userDTO);
+    }
+    @GetMapping("/user/avatar")
+    public ResponseEntity<Resource> getAvatar() {
         User user = userBO.findUserLogged();
         String avatarName = user.getAvatar();
         Resource image = imageBO.loadImage(avatarName);
@@ -76,8 +79,8 @@ public class UserController {
      * @return
      * @throws IOException
      */
-    @PostMapping("/avatar")
-    public ResponseEntity<?> uploadImage(@RequestParam("image") MultipartFile file) {
+    @PostMapping("/user/avatar")
+    public ResponseEntity<?> uploadAvatar(@RequestParam("image") MultipartFile file) {
 
         Boolean updated = userBO.updateImage(file);
         return (updated) ?
@@ -86,8 +89,49 @@ public class UserController {
     }
 
 
+    /**
+     * Ruta pública que registra a un usuario y le devuelve un token
+     * @param newuser UserDTO
+     * @return código 200 + token ó  400
+     */
+    @PostMapping("/public/user/register")
+    public ResponseEntity<?> postUser(@RequestBody UserDTO newuser) throws NoSuchMethodException {
+        User saved = userBO.createUser(newuser);
+
+        if(saved != null){
+            TokenInfoDTO token = userBO.authenticate(new AuthenticationReqDTO(newuser.getEmail(), newuser.getPassword()));
+            return ResponseEntity.ok(token);
+        }
+        return ResponseEntity.badRequest().build();
+    }
+
+    /**
+     * Función que devuelve un nuevo token a un usuario registrado
+     * @param authenticationReq AuthenticationReqDTO
+     * @return
+     */
+    @PostMapping("/public/user/authenticate")
+    public ResponseEntity<?> getToken(@RequestBody AuthenticationReqDTO authenticationReq) {
+        LOG.info("Autenticando al usuario {}", authenticationReq.getEmail());
+        TokenInfoDTO token = userBO.authenticate(authenticationReq);
+        return (token == null) ?
+                ResponseEntity.badRequest().build() :
+                ResponseEntity.ok(token);
+    }
 
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteOneUser() {
+        userBO.deleteUser();
+        return ResponseEntity.noContent().build();
+    }
+
+  
+    @PutMapping("/user/me/update")
+    public ResponseEntity<?> updateUser(UserDTO userDTO) {
+        UserDTO updatedUser = userBO.updateUser(userDTO);
+        return ResponseEntity.ok(updatedUser);
+    }
 
     /* Para mostrar el formulario de prueba para subir imagenes. //TODO borrar*/
     @GetMapping("/user/{id}/uploadimage") public String displayUploadForm() {

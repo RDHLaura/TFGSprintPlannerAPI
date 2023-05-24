@@ -21,8 +21,7 @@ public class UserDetailsServiceBO implements UserDetailsService {
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        //User user = userRepository.findByUsernameIgnoreCase(username);
-        User user = userRepository.findByEmailIgnoreCase(username);
+        User user = userRepository.findByEmailIgnoreCase(username).orElse(null);
 
         if (user != null) {
             org.springframework.security.core.userdetails.User.UserBuilder userBuilder = org.springframework.security.core.userdetails.User.withUsername(username);

@@ -1,15 +1,13 @@
 package com.tfg.sprintplannerapi.dto;
 
+import com.tfg.sprintplannerapi.model.Project;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.io.Serializable;
-
 @Data
 @AllArgsConstructor
-public class AuthenticationReqDTO implements Serializable {
-
+public class AuthenticationReqDTO extends BaseDTO<Project> {
     private static final long serialVersionUID = 969448392357624487L;
     private String email;
-    private String clave;
+    private String password;
 }

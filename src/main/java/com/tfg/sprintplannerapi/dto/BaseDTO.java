@@ -2,28 +2,26 @@ package com.tfg.sprintplannerapi.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
+import com.tfg.sprintplannerapi.utils.ObjectMapper;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
-import java.util.List;
+
 
 @Data
+public abstract class BaseDTO <T>  implements Serializable {
 
-public abstract class BaseDTO <T> {
     private static final Logger LOG = LoggerFactory.getLogger(BaseDTO.class);
+    private static final long serialVersionUID = 5957406640789310067L;
     @JsonIgnore
-    private final ModelMapper mapper;
-
+    private final ObjectMapper mapper;
     private final Class<T> entityType;
-
+    private Long id;
 
     /**
      * Default contructor
@@ -33,7 +31,7 @@ public abstract class BaseDTO <T> {
         entityType =
                 (Class<T>) genericSuperclass
                         .getActualTypeArguments()[genericSuperclass.getActualTypeArguments().length -1];
-       mapper = new ModelMapper();
+       mapper = ObjectMapper.getInstance();
     }
 
     public void loadFromDomain(final T  entity){
@@ -50,8 +48,8 @@ public abstract class BaseDTO <T> {
         try{
             entity = entityType.getDeclaredConstructor().newInstance();
             mapper.map(this, entity);
-        } catch (InvocationTargetException  |
-                 InstantiationException     |
+        } catch (InvocationTargetException |
+                 InstantiationException |
                  IllegalAccessException e) {
             throw new RuntimeException(e);
         }

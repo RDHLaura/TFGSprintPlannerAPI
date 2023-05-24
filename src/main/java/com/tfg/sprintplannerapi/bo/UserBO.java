@@ -5,8 +5,8 @@ import com.tfg.sprintplannerapi.dao.UserRepository;
 import com.tfg.sprintplannerapi.dto.AuthenticationReqDTO;
 import com.tfg.sprintplannerapi.dto.TokenInfoDTO;
 import com.tfg.sprintplannerapi.dto.UserDTO;
+import com.tfg.sprintplannerapi.error.BadInputException;
 import com.tfg.sprintplannerapi.model.User;
-import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,12 +19,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-
 import javax.transaction.Transactional;
 
 @Service
 @Transactional
-public class UserBO extends BaseBO<User, Long, UserRepository> {
+public class UserBO extends BaseBO<User, Long, UserDTO, UserRepository> {
     @Autowired private UserRepository userRepository;
     private static final Logger logger = LoggerFactory.getLogger(UserBO.class);
     @Autowired PasswordEncoder passwordEncoder;
@@ -33,15 +32,9 @@ public class UserBO extends BaseBO<User, Long, UserRepository> {
     @Autowired private ImageBO imageBO;
     @Autowired UserDetailsService usuarioDetailsService;
 
-
-
-    public User createUser (UserDTO userDTO) {
-        User newUser = new User();
-        //TODO configurar mapper y mapear automaticamente
-        newUser.setEmail(userDTO.getEmail());
-        newUser.setUsername(userDTO.getUsername());
+    public User createUser (UserDTO userDTO) throws NoSuchMethodException {
+        User newUser = userDTO.obtainFromDomain();
         newUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
-
         return userRepository.save(newUser);
     }
 
@@ -51,15 +44,14 @@ public class UserBO extends BaseBO<User, Long, UserRepository> {
         try{
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(authenticationReqDTO.getEmail(),
-                            authenticationReqDTO.getClave()));
+                            authenticationReqDTO.getPassword()));
             final UserDetails userDetails = usuarioDetailsService.loadUserByUsername(authenticationReqDTO.getEmail());
             final String jwt = jwtUtilBO.generateToken(userDetails);
             TokenInfoDTO tokenInfo = new TokenInfoDTO(jwt);
             logger.info("token info", tokenInfo.getJwtToken());
-
             return tokenInfo;
         }catch (Exception e){
-            return null;
+            throw new BadInputException();
         }
     }
 
@@ -69,17 +61,47 @@ public class UserBO extends BaseBO<User, Long, UserRepository> {
 
         if (imageSaved != null) {
             userLogged.setAvatar(imageSaved);
+            repositorio.save(userLogged);
             return true;
         }
         return false;
     }
 
 
+    public void deleteUser(){
+        User userlogged = findUserLogged();
+        userlogged.setDeleted(true);
+        repositorio.save(userlogged);
+    }
+
+    public UserDTO updateUser(UserDTO dto)  {
+        User userlogged = findUserLogged();
+
+        if (dto.getEmail() != null) { userlogged.setEmail(dto.getEmail());}
+        if(dto.getUsername() != null) { userlogged.setUsername(dto.getUsername());}
+        if(dto.getPassword() != null) { userlogged.setPassword(passwordEncoder.encode(dto.getPassword()));}
+
+        repositorio.save(userlogged);
+        UserDTO userdto = new UserDTO();
+        userdto.loadFromDomain(userlogged);
+
+        return userdto;
+    }
+
     public User findUserLogged (){
         var auth =  SecurityContextHolder.getContext().getAuthentication();
-        User userLogged = userRepository.findByEmailIgnoreCase(auth.getName());
+        User userLogged = userRepository.findByEmailIgnoreCase(auth.getName()).orElse(null);
+
         return userLogged;
     }
+
+    public UserDTO findUserLoggedDTO (){
+        User user = findUserLogged();
+        UserDTO userDTO = new UserDTO();
+        userDTO.loadFromDomain(user);
+        return userDTO;
+    }
+
 
 
 }

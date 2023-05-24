@@ -23,7 +23,7 @@ public class Audit implements Serializable {
     private Long id;
 
     @Column(name = "deleted")
-    private Integer deleted = 0;
+    private Boolean deleted = false;
 
     /**When object was created*/
     @Temporal(TemporalType.TIMESTAMP)

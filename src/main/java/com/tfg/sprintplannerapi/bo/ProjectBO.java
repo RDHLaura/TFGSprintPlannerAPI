@@ -4,11 +4,17 @@ import com.tfg.sprintplannerapi.bo.base.BaseBO;
 import com.tfg.sprintplannerapi.dao.ProjectRepository;
 import com.tfg.sprintplannerapi.dao.UserRepository;
 import com.tfg.sprintplannerapi.dto.ProjectDTO;
+import com.tfg.sprintplannerapi.dto.TeamDTO;
+import com.tfg.sprintplannerapi.error.BadInputException;
+import com.tfg.sprintplannerapi.error.MappingException;
+import com.tfg.sprintplannerapi.error.NotFoundException;
+import com.tfg.sprintplannerapi.error.UnauthorizedAccessException;
 import com.tfg.sprintplannerapi.model.Project;
+import com.tfg.sprintplannerapi.model.Rol;
 import com.tfg.sprintplannerapi.model.User;
 import com.tfg.sprintplannerapi.utils.ListMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -17,66 +23,120 @@ import java.util.List;
 
 @Service
 @Transactional
-public class ProjectBO extends BaseBO <Project, Long, ProjectRepository> {
+public class ProjectBO extends BaseBO <Project, Long, ProjectDTO, ProjectRepository> {
 
     @Autowired private UserBO userBO;
     @Autowired private ProjectRepository projectRepository;
     @Autowired
     private UserRepository userRepository;
+    private User userLogged;
+    public List<ProjectDTO> findAllDTO() {
+        userLogged = userBO.findUserLogged() ;
+        //Lista los proyectos en los que participa el usuario registrado
+        List<Project> projects = userLogged.getProjects();
 
-    public List<ProjectDTO> findAllDTO() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        //TODO mostrar solo si el usuario registrado participa en los proyectos
-        List<Project> projects = projectRepository.findAll();
-        List<ProjectDTO> projectDTOS = ListMapper.map(projects, ProjectDTO.class);
-        return projectDTOS;
+        try {
+            return ListMapper.map(projects, ProjectDTO.class);
+        } catch (NoSuchMethodException |
+                InvocationTargetException |
+                InstantiationException |
+                IllegalAccessException e) {
+            throw new MappingException();
+        }
     }
 
-    public ProjectDTO findOne(Long id) {
-        //TODO mostrar solo si el usuario registrado participa en el proyecto
-        Project project = projectRepository.findById(id).orElse(null);
+    public TeamDTO findTeam(Long id) {
+        Project project = projectRepository.findById(id).orElseThrow(NotFoundException::new);
+        userLogged = userBO.findUserLogged();
+        List<Rol> roles = Rol.getRolUser(userLogged, project);
+        if(!roles.contains(Rol.PARTICIPANTE) ){
+            throw new UnauthorizedAccessException();
+        }
+        TeamDTO teamDTO = new TeamDTO();
+        teamDTO.loadFromDomain(project);
+        return teamDTO;
+    }
+
+    public ProjectDTO create(ProjectDTO dto) {
+        userLogged = userBO.findUserLogged() ;
+
+        dto.setId(null); //se setea a null por si viene en la request con un id no pise ninguna entidad ya creada
+        Project project = null;
+        try {
+            project = dto.obtainFromDomain();
+        } catch (NoSuchMethodException e) {
+            throw new MappingException();
+        }
+        if(dto.getDirectorEmail() != null){
+            project.setDirector(userRepository.findByEmailIgnoreCase(dto.getDirectorEmail()).orElse(null));
+        }
+        //añado el creador al team y al director si es distinto del creador
+        project.getTeam().add(userLogged);
+        if (project.getDirector() != userLogged){
+            project.getTeam().add(userLogged);
+        }
+        Project created = projectRepository.save(project);
+        ProjectDTO createdDTO = new ProjectDTO();
+        createdDTO.loadFromDomain(created);
+        return createdDTO;
+    }
+
+
+    public Project deleteProject(Long id)  {
+        Project project = projectRepository.findById(id).orElseThrow(NotFoundException::new);
+        userLogged = userBO.findUserLogged();
+        List<Rol> roles = Rol.getRolUser(userLogged, project);
+        if(!roles.contains(Rol.CREADOR) ){
+            throw new UnauthorizedAccessException();
+        }
+        project.setDeleted(true);
+        return projectRepository.save(project);
+    }
+
+    public ProjectDTO updateProject(Long id, ProjectDTO dto)  {
+        Project project = projectRepository.findById(id).orElseThrow(NotFoundException::new);
+        userLogged = userBO.findUserLogged();
+        List<Rol> roles = Rol.getRolUser(userLogged, project);
+        if(!roles.contains(Rol.CREADOR) && !roles.contains(Rol.DIRECTOR) ){
+            throw new UnauthorizedAccessException();
+        }
+        if (dto.getTitle() != null)
+            project.setTitle(dto.getTitle());
+
+        if(dto.getDescription() != null)
+            project.setDescription(dto.getDescription());
+
+        if(dto.getState() != null)
+            project.setState(dto.getState());
+
+        if(dto.getDirectorEmail() != null){
+            User newDirector = userRepository.findByEmailIgnoreCase(dto.getDirectorEmail()).orElse(null);
+            project.setDirector(newDirector);
+            //si el nuevo director no está ya en el team se incorpora
+            if( !project.getTeam().contains(newDirector)){
+                project.getTeam().add(newDirector);
+            }
+        }
         ProjectDTO projectDTO = new ProjectDTO();
         projectDTO.loadFromDomain(project);
         return projectDTO;
     }
 
-    public Project create(ProjectDTO dto) throws NoSuchMethodException {
-        Project project = dto.obtainFromDomain();
-        return (project == null)? null : projectRepository.save(project);
-    }
 
-    @Override
-    public void delete(Project project) {
-        User logged = userBO.findUserLogged();
-        if(project.getCreatedBy() == logged.getEmail() ){
-            project.setDeleted(1);
-        }else{
-            throw new AccessDeniedException ("Sólo el creador puede eliminar el proyecto.");
+    public Project createParticipation(Long idProject, Long idUser ) throws ChangeSetPersister.NotFoundException {
+        userLogged = userBO.findUserLogged();
+        Project project = projectRepository.findById(idProject).orElseThrow(ChangeSetPersister.NotFoundException::new);
+        User user = userRepository.findById(idUser).orElseThrow(ChangeSetPersister.NotFoundException::new);
+        List<Rol> roles = Rol.getRolUser(userLogged, project);
+        if(!roles.contains(Rol.CREADOR) && !roles.contains(Rol.DIRECTOR) ){ //si no tiene permisos
+            throw new UnauthorizedAccessException();
         }
-    }
-
-    public Project update(Long id, ProjectDTO dto){
-        User logged = userBO.findUserLogged();
-        Project project = projectRepository.findById(id).orElse(null);
-        if(project == null){ return null;}
-
-        if(project.getCreatedBy() == logged.getEmail() ||
-                project.getDirector().getEmail() == logged.getEmail()){
-
-            if (dto.getTitle() != null)
-                project.setTitle(dto.getTitle());
-
-            if(dto.getDescription() != null)
-                project.setDescription(dto.getDescription());
-
-            if(dto.getState() != null)
-                project.setState(dto.getState());
-
-            if(dto.getDirector() != null){
-                project.setDirector(userRepository.findByEmailIgnoreCase(dto.getDirector()));
-            }
-        }else{
-            throw new AccessDeniedException ("Sólo el director ó creador pueded modificar el proyecto.");
+        if(project.getTeam().contains(user)){ //si ya existe la participación
+            throw new BadInputException();
         }
-        return project;
+        project.getTeam().add(user);
+        return projectRepository.save(project);
+
     }
+
 }

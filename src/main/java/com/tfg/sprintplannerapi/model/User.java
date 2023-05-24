@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import javax.xml.bind.annotation.XmlRootElement;
+import java.util.List;
 
 @Data
 @Entity
@@ -32,4 +32,6 @@ public class User extends Audit{
     @Column(name = "avatar", length = 200)
     private String avatar = null;
 
+    @ManyToMany(mappedBy = "team", fetch = FetchType.EAGER)
+    List<Project> projects;
 }
