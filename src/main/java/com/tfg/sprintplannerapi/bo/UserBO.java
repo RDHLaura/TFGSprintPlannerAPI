@@ -88,6 +88,7 @@ public class UserBO extends BaseBO<User, Long, UserDTO, UserRepository> {
         return userdto;
     }
 
+    @Transactional
     public User findUserLogged (){
         var auth =  SecurityContextHolder.getContext().getAuthentication();
         User userLogged = userRepository.findByEmailIgnoreCase(auth.getName()).orElse(null);

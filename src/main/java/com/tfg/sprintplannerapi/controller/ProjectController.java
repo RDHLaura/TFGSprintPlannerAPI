@@ -2,26 +2,31 @@ package com.tfg.sprintplannerapi.controller;
 
 import com.tfg.sprintplannerapi.bo.ProjectBO;
 import com.tfg.sprintplannerapi.dto.ProjectDTO;
+import com.tfg.sprintplannerapi.dto.ProjectPostDTO;
 import com.tfg.sprintplannerapi.dto.TeamDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.SortDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+
 
 @RestController
 @RequestMapping("project")
 public class ProjectController {
     @Autowired private ProjectBO projectBO;
 
-
     @GetMapping()
-    public ResponseEntity<List<ProjectDTO>> getAllProjects() {
-        List<ProjectDTO> projectsDTO = projectBO.findAllDTO();
-        return (projectsDTO.isEmpty())?
-                ResponseEntity.noContent().build() :
-                ResponseEntity.ok(projectsDTO);
+    public ResponseEntity<Page<ProjectDTO>> getAllProjects(
+            @PageableDefault(page = 0, size = 4) @SortDefault(sort = "updateDate", direction = Sort.Direction.DESC) Pageable pageable,
+            @RequestParam(required = false, name = "deleted", defaultValue = "false") Boolean deleted) {
+        Page<ProjectDTO> projectsDTO = projectBO.findAllPage(pageable, deleted);
+        return ResponseEntity.ok(projectsDTO);
     }
 
     @GetMapping("/{id}")
@@ -31,7 +36,7 @@ public class ProjectController {
         return ResponseEntity.ok(projectDTO);
     }
     @GetMapping("/{id}/team")
-    public ResponseEntity<TeamDTO> getOneProjectTeam(@PathVariable Long id) {
+    public ResponseEntity<TeamDTO> getProjectTeam(@PathVariable Long id) {
 
         TeamDTO teamDTO= projectBO.findTeam(id);
         return ResponseEntity.ok(teamDTO);
@@ -49,9 +54,11 @@ public class ProjectController {
     }
 
     @PostMapping()
-    public ResponseEntity<ProjectDTO> newProject(@RequestBody ProjectDTO dto) {
+    public ResponseEntity<?> newProject(@RequestBody ProjectPostDTO dto) {
         ProjectDTO project = projectBO.create(dto);
-        return ResponseEntity.ok(project);
+        return (project != null) ?
+                ResponseEntity.ok(project) :
+                ResponseEntity.badRequest().build();
 
     }
 
@@ -62,5 +69,14 @@ public class ProjectController {
             return (projectDTO == null) ?
                     ResponseEntity.badRequest().build() :
                     ResponseEntity.ok(projectDTO);
+    }
+
+
+    @PostMapping("/{id}/participation")
+    public ResponseEntity<ProjectDTO> newParticipation(
+            @PathVariable Long idProject, //TODO probar si coge el id del proyecto
+            @RequestParam(name = "idUser") Long idUser) {
+        ProjectDTO project = projectBO.createParticipation(idProject, idUser);
+        return ResponseEntity.ok(project);
     }
 }

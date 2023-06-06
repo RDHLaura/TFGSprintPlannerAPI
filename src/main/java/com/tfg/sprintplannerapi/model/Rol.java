@@ -8,18 +8,22 @@ public enum Rol {
 
     //Devuelve el rol del usuario en el proyecto
     public static List<Rol> getRolUser(User userLogged, Project project) {
-
+        String emailLogged = userLogged.getEmail();
+        String emailCreator = project.getCreatedBy();
+        String emailDirector = project.getDirector().getEmail();
         List<Rol> rolUser = new ArrayList<>();
 
-        if (userLogged.getEmail() == project.getCreatedBy()){
-            rolUser.add(Rol.CREADOR);
-        }
-        if (userLogged.getEmail() == project.getDirector().getEmail()) {
-            rolUser.add(Rol.DIRECTOR);
-        }
         if (project.getTeam().contains(userLogged)) {
             rolUser.add(Rol.PARTICIPANTE);
         }
+
+        if ( emailLogged.equals(emailCreator)){
+            rolUser.add(Rol.CREADOR);
+        }
+        if (emailLogged.equals(emailDirector)) {
+            rolUser.add(Rol.DIRECTOR);
+        }
+
         return rolUser;
     }
 }

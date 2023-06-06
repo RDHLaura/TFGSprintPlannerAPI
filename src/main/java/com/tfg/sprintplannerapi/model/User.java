@@ -1,5 +1,6 @@
 package com.tfg.sprintplannerapi.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.sun.istack.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -32,6 +33,7 @@ public class User extends Audit{
     @Column(name = "avatar", length = 200)
     private String avatar = null;
 
-    @ManyToMany(mappedBy = "team", fetch = FetchType.EAGER)
+    @JsonBackReference
+    @ManyToMany(mappedBy = "team", fetch = FetchType.LAZY)
     List<Project> projects;
 }

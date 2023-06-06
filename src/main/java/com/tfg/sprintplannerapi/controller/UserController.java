@@ -11,6 +11,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.SortDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -35,14 +40,19 @@ public class UserController {
      * @return 200 + lista de usuarios ó 204
      */
     @GetMapping("/user")
-    public ResponseEntity<?> getAllUsers() {
-        List<User> listUser = userBO.findAll();
-        Boolean test = permissionFilter.hasPermission(listUser.get(0), "get");
-        LOG.debug("permisionFilter: ", test);
+    public ResponseEntity<Page<UserDTO>> getAllUsers(
+            @PageableDefault(page = 0, size = 4)
+            @SortDefault(sort = "username", direction = Sort.Direction.ASC) Pageable pageable
+            ) {
+        Page<UserDTO> listUser = userBO.findAll(pageable);
 
-        return listUser.isEmpty()?
-                ResponseEntity.noContent().build():
-                ResponseEntity.ok(listUser);
+        return ResponseEntity.ok(listUser);
+    }
+    @GetMapping("/user/all")
+    public ResponseEntity<List<UserDTO>> getAllUsersList() {
+        List<UserDTO> listUser = userBO.findAllList();
+
+        return ResponseEntity.ok(listUser);
     }
 
     @GetMapping("/user/me")
@@ -111,7 +121,7 @@ public class UserController {
      * @return
      */
     @PostMapping("/public/user/authenticate")
-    public ResponseEntity<?> getToken(@RequestBody AuthenticationReqDTO authenticationReq) {
+    public ResponseEntity<TokenInfoDTO> getToken(@RequestBody AuthenticationReqDTO authenticationReq) {
         LOG.info("Autenticando al usuario {}", authenticationReq.getEmail());
         TokenInfoDTO token = userBO.authenticate(authenticationReq);
         return (token == null) ?
@@ -128,7 +138,7 @@ public class UserController {
 
   
     @PutMapping("/user/me/update")
-    public ResponseEntity<?> updateUser(UserDTO userDTO) {
+    public ResponseEntity<UserDTO> updateUser(UserDTO userDTO) {
         UserDTO updatedUser = userBO.updateUser(userDTO);
         return ResponseEntity.ok(updatedUser);
     }

@@ -7,5 +7,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public class NotFoundException extends RuntimeException{
     public NotFoundException() {super("The specified item could not be found.");}
     public NotFoundException(Long id) {super("The item with ID " + id + " could not be found.");}
+    public NotFoundException(String message) {super(message);}
 
 }

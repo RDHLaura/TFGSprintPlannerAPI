@@ -17,6 +17,4 @@ public class ListMapper {
         }
         return result;
     }
-
-
 }

@@ -2,13 +2,19 @@ package com.tfg.sprintplannerapi.bo.base;
 
 import com.tfg.sprintplannerapi.dto.BaseDTO;
 import com.tfg.sprintplannerapi.error.MappingException;
+import com.tfg.sprintplannerapi.error.NoContentException;
 import com.tfg.sprintplannerapi.error.NotFoundException;
+import com.tfg.sprintplannerapi.utils.ListMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import javax.transaction.Transactional;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,7 +34,7 @@ public abstract class BaseBO <T, ID, D extends BaseDTO<T>, R extends JpaReposito
         final ParameterizedType genericSuperclass = (ParameterizedType) getClass().getGenericSuperclass();
         dtoType =
                 (Class<D>) genericSuperclass
-                        .getActualTypeArguments()[genericSuperclass.getActualTypeArguments().length -1];
+                        .getActualTypeArguments()[genericSuperclass.getActualTypeArguments().length -2];
     }
 
 
@@ -51,12 +57,38 @@ public abstract class BaseBO <T, ID, D extends BaseDTO<T>, R extends JpaReposito
         return dto;
     }
 
+    @Transactional
     public Optional<T> findById(ID id){
         return repositorio.findById(id);
     }
 
-    public List<T> findAll() {
-        return repositorio.findAll();
+
+    public Page<D> findAll(Pageable pageable) {
+        Page<T> listEntity = repositorio.findAll(pageable);
+        if(listEntity.getContent().isEmpty())
+            throw new NoContentException();
+
+        List<D> listDTOs = new ArrayList<>();
+        try {
+            listDTOs = ListMapper.map(listEntity.getContent(), dtoType);
+        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+            throw new MappingException();
+        }
+        return new PageImpl<>(listDTOs, pageable, listEntity.getTotalElements());
+    }
+
+    public List<D> findAllList() {
+        List<T> listEntity = repositorio.findAll();
+        if(listEntity.isEmpty())
+            throw new NoContentException();
+
+        List<D> listDTOs = new ArrayList<>();
+        try {
+            listDTOs = ListMapper.map(listEntity, dtoType);
+        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+            throw new MappingException();
+        }
+        return listDTOs;
     }
 
     public T edit(T t) {
