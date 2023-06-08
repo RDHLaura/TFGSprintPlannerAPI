@@ -1,6 +1,6 @@
-USE db_sprintplanner;
+USE railway;
 
-INSERT IGNORE INTO `db_sprintplanner`.`users` (`create_time`, `create_user_id`, `deleted`, `update_time`, `update_user_id`, `avatar`, `email`, `password`, `username`)
+INSERT IGNORE INTO `railway`.`users` (`create_time`, `create_user_id`, `deleted`, `update_time`, `update_user_id`, `avatar`, `email`, `password`, `username`)
 VALUES
     ('2023-05-01 10:00:00', -1, 0, '2023-05-01 10:00:00', -1, 'avatar1.jpg', 'user1@example.com', '$2a$10$QJpmL02a3dSKv/qCkAs6w.Y8zoYG1PxE52iVX1ilvKgcE9glJz7Wu', 'user1'),
     ('2023-05-02 11:00:00', -1, 0, '2023-05-02 11:00:00', -1, 'avatar2.jpg', 'user2@example.com', '$2a$10$WZpRqfM53BfqEe.uQxtZduZanFk/ZXXlgugzK3HzMoQq9IbIvl8nS', 'user2'),

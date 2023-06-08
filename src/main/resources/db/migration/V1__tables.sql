@@ -5,15 +5,15 @@ SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
 -- -----------------------------------------------------
--- Schema db_sprintplanner
+-- Schema railway
 -- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS `db_sprintplanner` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish2_ci ;
-USE `db_sprintplanner` ;
+CREATE SCHEMA IF NOT EXISTS `railway` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish2_ci ;
+USE `railway` ;
 
 -- -----------------------------------------------------
--- Table `db_sprintplanner`.`users`
+-- Table `railway`.`users`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `db_sprintplanner`.`users` (
+CREATE TABLE IF NOT EXISTS `railway`.`users` (
                                                           `id` BIGINT NOT NULL AUTO_INCREMENT,
                                                           `create_time` DATETIME(6) NOT NULL,
     `create_user_id` VARCHAR(50) NULL DEFAULT NULL,
@@ -33,9 +33,9 @@ CREATE TABLE IF NOT EXISTS `db_sprintplanner`.`users` (
 
 
 -- -----------------------------------------------------
--- Table `db_sprintplanner`.`projects`
+-- Table `railway`.`projects`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `db_sprintplanner`.`projects` (
+CREATE TABLE IF NOT EXISTS `railway`.`projects` (
                                                              `id` BIGINT NOT NULL AUTO_INCREMENT,
                                                              `create_time` DATETIME(6) NOT NULL,
     `create_user_id` VARCHAR(50) NULL DEFAULT NULL,
@@ -50,26 +50,26 @@ CREATE TABLE IF NOT EXISTS `db_sprintplanner`.`projects` (
     INDEX `FKc7n80muxvf9gx2w5ae4wg0knj` (`users_id` ASC) VISIBLE,
     CONSTRAINT `FKc7n80muxvf9gx2w5ae4wg0knj`
     FOREIGN KEY (`users_id`)
-    REFERENCES `db_sprintplanner`.`users` (`id`))
+    REFERENCES `railway`.`users` (`id`))
     ENGINE = InnoDB
     DEFAULT CHARACTER SET = utf8mb4
     COLLATE = utf8mb4_spanish2_ci;
 
 
 -- -----------------------------------------------------
--- Table `db_sprintplanner`.`participations`
+-- Table `railway`.`participations`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `db_sprintplanner`.`participations` (
+CREATE TABLE IF NOT EXISTS `railway`.`participations` (
                                                                    `projects_id` BIGINT NOT NULL,
                                                                    `users_id` BIGINT NOT NULL,
                                                                    INDEX `FKjknx8qjryles0rkm6no0t4den` (`users_id` ASC) VISIBLE,
     INDEX `FKqc2cf8f2281af2sfypslegh7r` (`projects_id` ASC) VISIBLE,
     CONSTRAINT `FKjknx8qjryles0rkm6no0t4den`
     FOREIGN KEY (`users_id`)
-    REFERENCES `db_sprintplanner`.`users` (`id`),
+    REFERENCES `railway`.`users` (`id`),
     CONSTRAINT `FKqc2cf8f2281af2sfypslegh7r`
     FOREIGN KEY (`projects_id`)
-    REFERENCES `db_sprintplanner`.`projects` (`id`))
+    REFERENCES `railway`.`projects` (`id`))
     ENGINE = InnoDB
     DEFAULT CHARACTER SET = utf8mb4
     COLLATE = utf8mb4_spanish2_ci;
