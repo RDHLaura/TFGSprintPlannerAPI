@@ -74,18 +74,21 @@ public class UserBO extends BaseBO<User, Long, UserDTO, UserRepository> {
         repositorio.save(userlogged);
     }
 
-    public UserDTO updateUser(UserDTO dto)  {
+    public TokenInfoDTO updateUser(UserDTO dto)  {
         User userlogged = findUserLogged();
+        TokenInfoDTO token = null;
 
-        if (dto.getEmail() != null) { userlogged.setEmail(dto.getEmail());}
+        //if(dto.getEmail() != null || !dto.getEmail().equals("") ) { userlogged.setEmail(dto.getEmail());}
         if(dto.getUsername() != null) { userlogged.setUsername(dto.getUsername());}
-        if(dto.getPassword() != null) { userlogged.setPassword(passwordEncoder.encode(dto.getPassword()));}
+        if(dto.getPassword() != null) {
+
+            userlogged.setPassword(passwordEncoder.encode(dto.getPassword()));
+            token = authenticate(new AuthenticationReqDTO(userlogged.getEmail(), dto.getPassword()));
+        }
 
         repositorio.save(userlogged);
-        UserDTO userdto = new UserDTO();
-        userdto.loadFromDomain(userlogged);
 
-        return userdto;
+        return token;
     }
 
     @Transactional

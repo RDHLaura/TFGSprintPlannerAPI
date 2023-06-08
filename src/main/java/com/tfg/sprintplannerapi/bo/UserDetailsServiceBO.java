@@ -24,7 +24,8 @@ public class UserDetailsServiceBO implements UserDetailsService {
         User user = userRepository.findByEmailIgnoreCase(username).orElse(null);
 
         if (user != null) {
-            org.springframework.security.core.userdetails.User.UserBuilder userBuilder = org.springframework.security.core.userdetails.User.withUsername(username);
+            org.springframework.security.core.userdetails.User.UserBuilder userBuilder =
+                    org.springframework.security.core.userdetails.User.withUsername(username);
 
             //TODO establecer clase roles
             userBuilder.password(user.getPassword()).roles("USER");

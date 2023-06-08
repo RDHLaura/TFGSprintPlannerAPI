@@ -138,9 +138,9 @@ public class UserController {
 
   
     @PutMapping("/user/me/update")
-    public ResponseEntity<UserDTO> updateUser(UserDTO userDTO) {
-        UserDTO updatedUser = userBO.updateUser(userDTO);
-        return ResponseEntity.ok(updatedUser);
+    public ResponseEntity<TokenInfoDTO> updateUser(@RequestBody UserDTO userDTO) {
+        TokenInfoDTO updatedToken = userBO.updateUser(userDTO);
+        return ResponseEntity.ok(updatedToken);
     }
 
     /* Para mostrar el formulario de prueba para subir imagenes. //TODO borrar*/
