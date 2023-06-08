@@ -1,6 +1,7 @@
 package com.tfg.sprintplannerapi.config;
 
 import com.tfg.sprintplannerapi.security.JwtRequestFilter;
+import com.tfg.sprintplannerapi.utils.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -34,8 +35,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private JwtRequestFilter jwtRequestFilter;
 
-    @Value("${urlFront}")
-    private String urlFront;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -66,7 +65,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Collections.singletonList(urlFront));
+        configuration.setAllowedOrigins(Collections.singletonList(Constants.BASEURL));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "DELETE", "PUT"));
         configuration.setExposedHeaders(Arrays.asList("Authorization", "content-type"));
          configuration.setAllowedHeaders(Arrays.asList("Authorization", "content-type"));
