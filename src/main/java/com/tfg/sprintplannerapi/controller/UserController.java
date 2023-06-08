@@ -26,13 +26,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:3003") //TODO borrar y testear desde el front
 @RestController
 @RequestMapping("")
 public class UserController {
     @Autowired private UserBO userBO;
     @Autowired private ImageBO imageBO;
-    @Autowired private PermissionFilter<User> permissionFilter;
     private static final Logger LOG = LoggerFactory.getLogger(UserController.class);
 
     /**
