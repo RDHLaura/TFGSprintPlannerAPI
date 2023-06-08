@@ -26,7 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:3003") //TODO borrar y testear desde el front
+@CrossOrigin(origins = "${urlFront}") //TODO borrar y testear desde el front
 @RestController
 @RequestMapping("")
 public class UserController {
