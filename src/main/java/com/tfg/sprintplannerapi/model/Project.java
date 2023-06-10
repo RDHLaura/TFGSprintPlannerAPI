@@ -1,14 +1,11 @@
 package com.tfg.sprintplannerapi.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.tfg.sprintplannerapi.model.states.State;
 import lombok.Data;
-import lombok.NonNull;
 
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @Data
 @Entity
@@ -35,8 +32,6 @@ public class Project extends Audit implements Comparable<Project>{
             joinColumns = @JoinColumn(name = "projects_id"),
             inverseJoinColumns = @JoinColumn(name = "users_id"))
     List<User> team = new ArrayList<>();
-
-
 
 
     @Override

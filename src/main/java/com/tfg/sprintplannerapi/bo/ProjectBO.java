@@ -2,13 +2,16 @@ package com.tfg.sprintplannerapi.bo;
 
 import com.tfg.sprintplannerapi.bo.base.BaseBO;
 import com.tfg.sprintplannerapi.dao.ProjectRepository;
+import com.tfg.sprintplannerapi.dao.SprintRepository;
 import com.tfg.sprintplannerapi.dao.UserRepository;
 import com.tfg.sprintplannerapi.dto.ProjectDTO;
 import com.tfg.sprintplannerapi.dto.ProjectPostDTO;
-import com.tfg.sprintplannerapi.dto.TeamDTO;
+import com.tfg.sprintplannerapi.dto.SprintDTO;
+import com.tfg.sprintplannerapi.dto.SprintPostDTO;
 import com.tfg.sprintplannerapi.error.*;
 import com.tfg.sprintplannerapi.model.Project;
 import com.tfg.sprintplannerapi.model.Rol;
+import com.tfg.sprintplannerapi.model.Sprint;
 import com.tfg.sprintplannerapi.model.User;
 import com.tfg.sprintplannerapi.utils.ListMapper;
 import org.hibernate.Hibernate;
@@ -21,16 +24,17 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 @Service
 @Transactional
 public class ProjectBO extends BaseBO <Project, Long, ProjectDTO, ProjectRepository> {
 
-    @Autowired private UserBO userBO;
+    @Autowired private SprintRepository sprintRepository;
     @Autowired private ProjectRepository projectRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired private UserBO userBO;
     private User userLogged;
 
     public Page<ProjectDTO> findAllPage(Pageable pageable, Boolean deleted) {
@@ -40,71 +44,13 @@ public class ProjectBO extends BaseBO <Project, Long, ProjectDTO, ProjectReposit
             throw new NoContentException();
         }
         /**CONVIERTO A DTO*/
-        List<ProjectDTO> projectsDTO ;
-        try {
-            projectsDTO = ListMapper.map(projects.getContent(), ProjectDTO.class);
-        } catch (NoSuchMethodException |
-                 InvocationTargetException |
-                 InstantiationException |
-                 IllegalAccessException e) {
-            throw new MappingException();
+        List<ProjectDTO> projectsDTO = new ArrayList<>();
+        for (Project project : projects.getContent()) {
+            ProjectDTO projectDTO = mapProjectWithSprints(project);
+            projectsDTO.add(projectDTO);
         }
+
         return new PageImpl<>(projectsDTO, pageable, projects.getContent().size());
-    }
-    public Page<ProjectDTO> findAll(Pageable pageable, Boolean deleted) {
-        userLogged = userBO.findUserLogged() ;
-
-        if(userLogged.getProjects().isEmpty()){
-            throw new NoContentException();
-        }
-        /**INICIALIZACIÓN ENTIDADES -> LAZY*/
-        userLogged.getProjects().forEach(project -> {
-            Hibernate.initialize(project);
-        });
-
-        /**Obtengo los proyectos activos o eliminados según la request*/
-        List<Project> projects;
-        if(deleted){
-            projects  = userLogged.getProjects().stream().filter(p -> p.getDeleted()).collect(Collectors.toList());
-        }else{
-            projects  = userLogged.getProjects().stream().filter(p -> !p.getDeleted()).collect(Collectors.toList());
-        }
-        /**PAGINACIÓN*/
-        //ordeno los proyectos por fecha de modificación
-        Collections.sort(projects, (u1, u2) -> u2.getUpdateDate().compareTo(u1.getUpdateDate()));
-        //obtengo los elementos paginados
-        int startIndex = pageable.getPageNumber() * pageable.getPageSize();
-        int endIndex = Math.min(startIndex + pageable.getPageSize(), projects.size());
-        List<Project> sublist  = projects.subList(startIndex, endIndex);
-        /**CONVIERTO A DTO*/
-        List<ProjectDTO> projectsDTO ;
-        try {
-            projectsDTO = ListMapper.map(sublist, ProjectDTO.class);
-        } catch (NoSuchMethodException |
-                InvocationTargetException |
-                InstantiationException |
-                IllegalAccessException e) {
-            throw new MappingException();
-        }
-        return new PageImpl<>(projectsDTO, pageable, projects.size());
-    }
-
-
-
-    /**No lo estoy usando, obtengo el equipo del proyecto*/
-    public TeamDTO findTeam(Long id) {
-        Project project = projectRepository.findById(id).orElseThrow(NotFoundException::new);
-        Hibernate.initialize(project);
-        //comprueba si el usuario logueado tiene acceso a ese proyecto
-        userLogged = userBO.findUserLogged();
-        List<Rol> roles = Rol.getRolUser(userLogged, project);
-        if(!roles.contains(Rol.PARTICIPANTE) ){
-            throw new UnauthorizedAccessException();
-        }
-
-        TeamDTO teamDTO = new TeamDTO();
-        teamDTO.loadFromDomain(project);
-        return teamDTO;
     }
 
     public ProjectDTO create(ProjectPostDTO dto) {
@@ -119,7 +65,9 @@ public class ProjectBO extends BaseBO <Project, Long, ProjectDTO, ProjectReposit
             throw new MappingException();
         }
         if(dto.getDirectorEmail() != null){
-            project.setDirector(userRepository.findByEmailIgnoreCase(dto.getDirectorEmail()).orElse(null));
+            project.setDirector(userRepository
+                    .findByEmailIgnoreCase(dto.getDirectorEmail())
+                    .orElse(null));
         }
 
         for (String user: dto.getTeamEmails()){
@@ -133,9 +81,8 @@ public class ProjectBO extends BaseBO <Project, Long, ProjectDTO, ProjectReposit
         newteam.add(project.getDirector());
         project.setTeam(new ArrayList<>(new HashSet<>(newteam)));
         Project created = save(project);
-        ProjectDTO createdDTO = new ProjectDTO();
-        createdDTO.loadFromDomain(created);
-        return createdDTO;
+        ProjectDTO projectDTO = mapProjectWithSprints(project);
+        return projectDTO;
     }
 
 
@@ -158,18 +105,10 @@ public class ProjectBO extends BaseBO <Project, Long, ProjectDTO, ProjectReposit
         Hibernate.initialize(project);
 
         List<Rol> roles = Rol.getRolUser(userLogged, project);
-        if(!roles.contains(Rol.CREADOR) && !roles.contains(Rol.DIRECTOR) ){
-            throw new UnauthorizedAccessException();
-        }
-        if (dto.getTitle() != null)
-            project.setTitle(dto.getTitle());
-
-        if(dto.getDescription() != null)
-            project.setDescription(dto.getDescription());
-
-        if(dto.getState() != null)
-            project.setState(dto.getState());
-
+        if(!roles.contains(Rol.CREADOR) && !roles.contains(Rol.DIRECTOR) ){ throw new UnauthorizedAccessException();}
+        if(dto.getTitle() != null){ project.setTitle(dto.getTitle()); }
+        if(dto.getDescription() != null){ project.setDescription(dto.getDescription()); }
+        if(dto.getState() != null){ project.setState(dto.getState()); }
         if(dto.getDirectorEmail() != null){
             User newDirector = userRepository.findByEmailIgnoreCase(dto.getDirectorEmail()).orElse(null);
             project.setDirector(newDirector);
@@ -178,12 +117,6 @@ public class ProjectBO extends BaseBO <Project, Long, ProjectDTO, ProjectReposit
                 project.getTeam().add(newDirector);
             }
         }
-        //TODO actualizar el team
-        //comprobar que el team del dto es distinto del team entidad
-            //sí-> comprobar que el creador o director estén en el team
-                //no-> enviar badRequest (mensaje: no puede eliminar al creador /para eliminar al director del equipo deberá
-                            //asignar la dirección a otro miembro del equipo primero
-                //sí-> se actualiza el team
         if(dto.getTeamEmails() != null ){
             if(!dto.getTeamEmails().contains(project.getDirector().getEmail())){
                 throw new BadInputException("No puede eliminar al director del equipo, deberá asignar la dirección a otro miembro del equipo primero");
@@ -197,34 +130,85 @@ public class ProjectBO extends BaseBO <Project, Long, ProjectDTO, ProjectReposit
             });
             project.setTeam(updatedTeam);
         }
-
-
         projectRepository.save(project);
 
-        ProjectDTO projectDTO = new ProjectDTO();
-        projectDTO.loadFromDomain(project);
+        ProjectDTO projectDTO = mapProjectWithSprints(project);
         return projectDTO;
     }
 
 
-    /**No lo estoy usando -> ProjectUpdate*/
-    public ProjectDTO createParticipation(Long idProject, Long idUser )  {
+    public List<SprintDTO> findAllSprintsByProject(Long projectId){
+        Project project = this.findById(projectId).orElseThrow(NotFoundException::new);
         userLogged = userBO.findUserLogged();
-        Project project = projectRepository.findById(idProject).orElseThrow(()-> new NotFoundException("There is no project with ID: " + idProject));
-        User user = userRepository.findById(idUser).orElseThrow(()-> new NotFoundException("There is no project with ID: " + idUser));
-        //compruebo si el usuario logueado tiene permisos para incluir un nuevo participante en el proyecto
         List<Rol> roles = Rol.getRolUser(userLogged, project);
-        if(!roles.contains(Rol.CREADOR) && !roles.contains(Rol.DIRECTOR) ){ //si no tiene permisos
-            throw new UnauthorizedAccessException();
+        if( !roles.contains(Rol.PARTICIPANTE) ){ throw new UnauthorizedAccessException();}
+
+        List<Sprint> sprints = sprintRepository.findAllByProjectIdOrderByCreateDateDesc(projectId);
+        if(sprints.isEmpty())
+            return null;
+
+        List<SprintDTO> sprintsDTO;
+        try {
+            sprintsDTO = ListMapper.map(sprints, SprintDTO.class);
+        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException(e);
         }
-        Hibernate.initialize(project.getTeam());
-        if(project.getTeam().contains(user)){ //si ya existe la participación
-            throw new BadInputException("The user is already participating in that project.");
+        return sprintsDTO;
+    }
+
+
+    public ProjectDTO createSprint (SprintPostDTO dto){
+        Project project = sprintGetProject(dto.getIdProject());
+
+        dto.setId(null); //se setea a null por si viene en la request con un id no pise ninguna entidad ya creada
+        Sprint sprint;
+        try {
+            sprint = dto.obtainFromDomain(); //Mapeo el dto a entidad
+            sprint.setProject(project);
+        } catch (NoSuchMethodException e) {
+            throw new MappingException();
         }
-        project.getTeam().add(user);
-        ProjectDTO updateProject = new ProjectDTO();
-        updateProject.loadFromDomain(projectRepository.save(project));
-        return updateProject;
+        sprintRepository.save(sprint);
+        //devuelvo un dto del proyecto con los sprints
+        ProjectDTO projectDTO = mapProjectWithSprints(project);
+        return projectDTO;
+    }
+
+    public ProjectDTO updateSprint (Long id, SprintPostDTO dto){
+        Sprint sprint = sprintRepository.findById(id).orElseThrow(NotFoundException::new) ;
+        Project project = sprintGetProject(sprint.getProject().getId());
+
+        if(dto.getName() != null){ sprint.setName(dto.getName()); }
+        if(dto.getDescription() != null){ sprint.setDescription(dto.getDescription());}
+        if(dto.getState() != null){ sprint.setState(dto.getState()); }
+        if(dto.getDeleted() != null){ sprint.setDeleted(dto.getDeleted()); }
+        if(dto.getEndDate() != null){ sprint.setEndDate(dto.getEndDate()); }
+        sprintRepository.save(sprint);
+        //devuelvo un dto del proyecto con los sprints
+        ProjectDTO projectDTO = mapProjectWithSprints(project);
+        return projectDTO;
+    }
+
+
+
+
+
+    public Project sprintGetProject(Long id){
+        //compruebo que el proyecto exista y que el usuario tenga los permisos adecuados
+        Project project = projectRepository.findById(id).orElseThrow(NotFoundException::new);
+        userLogged = userBO.findUserLogged();
+        List<Rol> roles = Rol.getRolUser(userLogged, project);
+        if(!roles.contains(Rol.DIRECTOR)){ throw new UnauthorizedAccessException(); }
+
+        return project;
+    }
+
+
+    public ProjectDTO mapProjectWithSprints (Project project){
+        ProjectDTO projectDTO = new ProjectDTO();
+        projectDTO.loadFromDomain(project);
+        projectDTO.setSprints(findAllSprintsByProject(projectDTO.getId()));
+        return projectDTO;
     }
 
 }
