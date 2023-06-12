@@ -88,7 +88,7 @@ public class UserController {
      * @throws IOException
      */
     @PostMapping("/user/avatar")
-    public ResponseEntity<?> uploadAvatar(@RequestParam("image") MultipartFile file) {
+    public ResponseEntity<?> uploadAvatar(@RequestParam("image") MultipartFile file) throws IOException {
 
         Boolean updated = userBO.updateImage(file);
         return (updated) ?

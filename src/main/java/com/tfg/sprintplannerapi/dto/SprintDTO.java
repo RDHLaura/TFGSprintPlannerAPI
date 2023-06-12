@@ -21,7 +21,7 @@ public class SprintDTO extends BaseDTO<Sprint>{
     private String description;
     @JsonFormat(pattern="yyyy-MM-dd", timezone="Europe/Madrid")
     private Date endDate;
-
+    @JsonFormat(pattern="yyyy-MM-dd", timezone="Europe/Madrid")
     private Date createDate;
     private State state;
     private Long idProject;

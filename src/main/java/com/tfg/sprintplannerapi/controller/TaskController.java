@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import static org.springframework.data.domain.Sort.Direction.ASC;
+
 @RestController
 @RequestMapping("/task")
 public class TaskController {
@@ -20,7 +22,7 @@ public class TaskController {
 
     @GetMapping("/sprint/{id}")
     public ResponseEntity<Page<TaskDTO>> getAllTask(
-            @PageableDefault(page = 0, size = 10) @SortDefault(sort = "deadline", direction = Sort.Direction.ASC) Pageable pageable,
+            @PageableDefault(page = 0, size = 10) @SortDefault(sort = "deadline", direction = ASC) Pageable pageable,
             @PathVariable( name = "id") Long id) {
         Page<TaskDTO> tasks = taskBO.findAllTaskPage(pageable, id);
         return ResponseEntity.ok(tasks);
