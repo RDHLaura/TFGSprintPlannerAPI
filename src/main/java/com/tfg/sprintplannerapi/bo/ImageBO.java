@@ -21,7 +21,7 @@ public class ImageBO {
      */
     public String uploadImage( MultipartFile image){
         if(!image.isEmpty()){
-            Path directoryImage = Paths.get("src//main//resources//static//uploads");
+            Path directoryImage = Paths.get("//src//main//resources//static//uploads");
             String absoluteRoute = directoryImage.toFile().getAbsolutePath();
             try{
                 byte[] byteImg = image.getBytes();
@@ -44,7 +44,7 @@ public class ImageBO {
      */
     public Resource loadImage(String avatarName) {
         if(avatarName != null) {
-            Path imagePath = Paths.get("src//main//resources//static//uploads//" + avatarName);
+            Path imagePath = Paths.get("//src//main//resources//static//uploads//" + avatarName);
             Resource imageResource;
             imageResource = new FileSystemResource(imagePath);
 
