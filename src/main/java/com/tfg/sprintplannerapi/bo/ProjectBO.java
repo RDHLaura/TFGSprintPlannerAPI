@@ -13,6 +13,7 @@ import com.tfg.sprintplannerapi.model.Project;
 import com.tfg.sprintplannerapi.model.Rol;
 import com.tfg.sprintplannerapi.model.Sprint;
 import com.tfg.sprintplannerapi.model.User;
+import com.tfg.sprintplannerapi.model.states.State;
 import com.tfg.sprintplannerapi.utils.ListMapper;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -165,6 +166,7 @@ public class ProjectBO extends BaseBO <Project, Long, ProjectDTO, ProjectReposit
         try {
             sprint = dto.obtainFromDomain(); //Mapeo el dto a entidad
             sprint.setProject(project);
+            sprint.setState(State.OPEN);
         } catch (NoSuchMethodException e) {
             throw new MappingException();
         }
