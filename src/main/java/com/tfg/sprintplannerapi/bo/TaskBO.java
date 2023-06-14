@@ -3,7 +3,9 @@ package com.tfg.sprintplannerapi.bo;
 import com.tfg.sprintplannerapi.bo.base.BaseBO;
 import com.tfg.sprintplannerapi.dao.SprintRepository;
 import com.tfg.sprintplannerapi.dao.TaskRepository;
+import com.tfg.sprintplannerapi.dao.UserRepository;
 import com.tfg.sprintplannerapi.dto.TaskDTO;
+import com.tfg.sprintplannerapi.dto.UserDTO;
 import com.tfg.sprintplannerapi.error.NotFoundException;
 import com.tfg.sprintplannerapi.error.UnauthorizedAccessException;
 import com.tfg.sprintplannerapi.model.*;
@@ -18,11 +20,13 @@ import org.springframework.stereotype.Service;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TaskBO extends BaseBO<Task, Long, TaskDTO, TaskRepository> {
     @Autowired private UserBO userBO;
     @Autowired private SprintRepository sprintRepository;
+    @Autowired private UserRepository userRepository;
     @Autowired
     private TaskRepository taskRepository;
 
@@ -50,7 +54,7 @@ public class TaskBO extends BaseBO<Task, Long, TaskDTO, TaskRepository> {
             throw new RuntimeException(e);
         }
 
-        return new PageImpl<>(taskDTOList, pageable, taskList.getContent().size());
+        return new PageImpl<>(taskDTOList, pageable, taskList.getTotalElements());
     }
 
    public TaskDTO createTask (Long idSprint, TaskDTO dtoTask) throws NoSuchMethodException {
@@ -61,7 +65,15 @@ public class TaskBO extends BaseBO<Task, Long, TaskDTO, TaskRepository> {
            throw new UnauthorizedAccessException();
        }
        dtoTask.setId(null);
+       User user = userRepository.findByEmailIgnoreCase(dtoTask.getAssignedTo().getEmail()).orElse(null);
+       UserDTO userDTO = new UserDTO();
+       userDTO.setId(user.getId());
+       dtoTask.setAssignedTo(userDTO);
        Task task = dtoTask.obtainFromDomain();
+
+       if(user != null){
+           task.setAssignedTo(user);
+       }
 
        repositorio.save(task);
        TaskDTO taskDTO = new TaskDTO();
@@ -79,7 +91,13 @@ public class TaskBO extends BaseBO<Task, Long, TaskDTO, TaskRepository> {
         if(dtoTask.getName()        != null){task.setName(dtoTask.getName());}
         if(dtoTask.getDescription() != null){task.setDescription(dtoTask.getDescription());}
         if(dtoTask.getDeadline()    != null){task.setDeadline(dtoTask.getDeadline());}
-        if(dtoTask.getState()       != null){task.setState(dtoTask.getState());}
+        if(dtoTask.getAssignedTo()  != null){
+            User user = userRepository.findByEmailIgnoreCase(dtoTask.getAssignedTo().getEmail()).orElse(null);
+            if(user != null){
+                task.setAssignedTo(user);
+            }
+
+        }
 
         repositorio.save(task);
         TaskDTO taskDTO = new TaskDTO();

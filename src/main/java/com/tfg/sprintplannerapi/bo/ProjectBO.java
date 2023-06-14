@@ -50,7 +50,7 @@ public class ProjectBO extends BaseBO <Project, Long, ProjectDTO, ProjectReposit
             projectsDTO.add(projectDTO);
         }
 
-        return new PageImpl<>(projectsDTO, pageable, projects.getContent().size());
+        return new PageImpl<>(projectsDTO, pageable, projects.getTotalElements());
     }
 
     public ProjectDTO create(ProjectPostDTO dto) {

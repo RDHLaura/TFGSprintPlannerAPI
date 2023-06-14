@@ -18,7 +18,7 @@ import java.util.Date;
 public class SprintPostDTO extends BaseDTO<Sprint>{
     private String name;
     private String description;
-    private State state = State.OPEN;
+    private State state;
     @JsonFormat(pattern="yyyy-MM-dd", timezone="Europe/Madrid")
     private Date endDate;
     private Long idProject;
