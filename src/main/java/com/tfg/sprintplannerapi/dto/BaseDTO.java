@@ -1,6 +1,7 @@
 package com.tfg.sprintplannerapi.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tfg.sprintplannerapi.utils.ObjectMapper;
 import lombok.Data;
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
+import java.util.Date;
 
 
 @Data
@@ -22,6 +24,8 @@ public abstract class BaseDTO <T>  implements Serializable {
     private final ObjectMapper mapper;
     private final Class<T> entityType;
     private Long id;
+    @JsonFormat(pattern="yyyy-MM-dd", timezone="Europe/Madrid")
+    private Date createDate;
 
     /**
      * Default contructor

@@ -14,7 +14,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "users")
-
 public class User extends Audit{
     private static final long serialVersionUID = -5072505803681612517L;
 

@@ -10,6 +10,8 @@ import com.tfg.sprintplannerapi.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +22,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.transaction.Transactional;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Service
 @Transactional
@@ -54,14 +61,18 @@ public class UserBO extends BaseBO<User, Long, UserDTO, UserRepository> {
             throw new BadInputException();
         }
     }
-
-    public Boolean updateImage (MultipartFile image) {
+    @Autowired
+    private ResourceLoader resourceLoader;
+    public Boolean updateImage (MultipartFile image) throws IOException {
         User userLogged = findUserLogged();
         String imageSaved = imageBO.uploadImage(image) ;
-
+        Path directoryImage = Paths.get("src//main//resources//static//uploads");
+        String oldImg = directoryImage +"//"+ userLogged.getAvatar();
+        Path path = Paths.get(oldImg);
         if (imageSaved != null) {
             userLogged.setAvatar(imageSaved);
             repositorio.save(userLogged);
+            Files.deleteIfExists(path);
             return true;
         }
         return false;

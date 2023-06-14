@@ -15,7 +15,6 @@ import java.util.Date;
 @Data
 @MappedSuperclass
 public class Audit implements Serializable {
-
     private static final long serialVersionUID = -2680969231588318759L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

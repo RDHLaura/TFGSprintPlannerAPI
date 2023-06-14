@@ -72,7 +72,7 @@ public class UserController {
         String avatarName = user.getAvatar();
         Resource image = imageBO.loadImage(avatarName);
 
-        if (image.exists()) {
+        if (image != null && image.exists() ) {
             return ResponseEntity.ok()
                     .contentType(MediaType.IMAGE_JPEG) // Cambia el tipo de contenido según el formato de la imagen
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + avatarName + "\"")
@@ -88,7 +88,7 @@ public class UserController {
      * @throws IOException
      */
     @PostMapping("/user/avatar")
-    public ResponseEntity<?> uploadAvatar(@RequestParam("image") MultipartFile file) {
+    public ResponseEntity<?> uploadAvatar(@RequestParam("image") MultipartFile file) throws IOException {
 
         Boolean updated = userBO.updateImage(file);
         return (updated) ?
