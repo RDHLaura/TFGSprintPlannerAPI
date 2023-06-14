@@ -1,6 +1,5 @@
 package com.tfg.sprintplannerapi.bo;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -14,14 +13,6 @@ import java.util.UUID;
 
 @Service
 public class ImageBO {
-    private final Path rootLocation;
-
-
-
-
-    public ImageBO(@Value("${upload.root-location}") Path rootLocation) {
-        this.rootLocation = rootLocation;
-    }
 
     /**
      * Almacena la imagen en local y nombrandola con un nombre único generado
@@ -30,9 +21,8 @@ public class ImageBO {
      */
     public String uploadImage( MultipartFile image){
         if(!image.isEmpty()){
-
-            Path directoryImage = Paths.get("//src//main//resources//static//uploads");
-            String absoluteRoute = rootLocation.toFile().getAbsolutePath();
+            Path directoryImage = Paths.get("/src//main//resources//static//uploads");
+            String absoluteRoute = directoryImage.toFile().getAbsolutePath();
             try{
                 byte[] byteImg = image.getBytes();
                 String uniqueFileName = generateUniqueFileName(image.getOriginalFilename());
@@ -54,9 +44,9 @@ public class ImageBO {
      */
     public Resource loadImage(String avatarName) {
         if(avatarName != null) {
-            Path imagePath = Paths.get("//src//main//resources//static//uploads//" + avatarName);
+            Path imagePath = Paths.get("/src//main//resources//static//uploads//" + avatarName);
             Resource imageResource;
-            imageResource = new FileSystemResource(rootLocation);
+            imageResource = new FileSystemResource(imagePath);
 
             return imageResource;
         }
