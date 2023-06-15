@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS `railway`.`projects` (
   CONSTRAINT `FKc7n80muxvf9gx2w5ae4wg0knj`
     FOREIGN KEY (`users_id`)
     REFERENCES `railway`.`users` (`id`))
+    ON DELETE no action
 ENGINE = InnoDB
 AUTO_INCREMENT = 4
 DEFAULT CHARACTER SET = utf8mb4
@@ -96,10 +97,12 @@ CREATE TABLE IF NOT EXISTS `railway`.`participations` (
   INDEX `FKqc2cf8f2281af2sfypslegh7r` (`projects_id` ASC) VISIBLE,
   CONSTRAINT `FKjknx8qjryles0rkm6no0t4den`
     FOREIGN KEY (`users_id`)
-    REFERENCES `railway`.`users` (`id`),
+    REFERENCES `railway`.`users` (`id`)
+    ON DELETE CASCADE,
   CONSTRAINT `FKqc2cf8f2281af2sfypslegh7r`
     FOREIGN KEY (`projects_id`)
     REFERENCES `railway`.`projects` (`id`))
+    ON DELETE CASCADE
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_spanish2_ci;
@@ -126,6 +129,7 @@ CREATE TABLE IF NOT EXISTS `railway`.`sprints` (
   CONSTRAINT `FKoeo3tmlarfb4q1viy1qdl5adv`
     FOREIGN KEY (`projects_id`)
     REFERENCES `railway`.`projects` (`id`))
+    ON DELETE CASCADE
 ENGINE = InnoDB
 AUTO_INCREMENT = 25
 DEFAULT CHARACTER SET = utf8mb4
@@ -154,10 +158,12 @@ CREATE TABLE IF NOT EXISTS `railway`.`tasks` (
   INDEX `FKgv5kftowjl0g49sk17alufjon` (`users_id` ASC) VISIBLE,
   CONSTRAINT `FKbh75jvxo5nr2q0jwk8rsdv1da`
     FOREIGN KEY (`sprints_id`)
-    REFERENCES `railway`.`sprints` (`id`),
+    REFERENCES `railway`.`sprints` (`id`)
+    ON DELETE CASCADE,
   CONSTRAINT `FKgv5kftowjl0g49sk17alufjon`
     FOREIGN KEY (`users_id`)
     REFERENCES `railway`.`users` (`id`))
+    ON DELETE no action
 ENGINE = InnoDB
 AUTO_INCREMENT = 25
 DEFAULT CHARACTER SET = utf8mb4
