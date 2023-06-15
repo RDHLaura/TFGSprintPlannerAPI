@@ -26,13 +26,11 @@ public class Audit implements Serializable {
 
     /**When object was created*/
     @Temporal(TemporalType.TIMESTAMP)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Europe/Madrid")
     @Column(name = "create_time", nullable = false, length = 19, updatable = false)
     private Date createDate;
 
     /**When object was last updated. */
     @Temporal(TemporalType.TIMESTAMP)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Europe/Madrid")
     @Column(name = "update_time", length = 19)
     private Date updateDate;
 
