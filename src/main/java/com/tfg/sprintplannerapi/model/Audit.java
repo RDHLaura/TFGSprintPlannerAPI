@@ -86,7 +86,7 @@ public class Audit implements Serializable {
     }
     private Date getNow () throws ParseException{
         Calendar today = Calendar.getInstance();
-        today.set(Calendar.HOUR_OF_DAY, 0);
+        //today.set(Calendar.HOUR_OF_DAY, 0);
 
         Date now = today.getTime();
        /* SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
