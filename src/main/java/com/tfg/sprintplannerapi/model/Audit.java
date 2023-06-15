@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Calendar;
 import java.util.Date;
 
 @Data
@@ -84,10 +85,13 @@ public class Audit implements Serializable {
 
     }
     private Date getNow () throws ParseException{
-        Date date = new Date();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-        Date now = date.from(Instant.from(LocalDateTime.now()));
-                //dateFormat.parse(Instant.now().toString());
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+
+        Date now = today.getTime();
+       /* SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        Date now = dateFormat(date);
+                //dateFormat.parse(Instant.now().toString());*/
         return now;
     }
 }
