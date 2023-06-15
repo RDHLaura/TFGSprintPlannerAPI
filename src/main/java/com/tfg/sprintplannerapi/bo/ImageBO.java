@@ -44,7 +44,7 @@ public class ImageBO {
      */
     public Resource loadImage(String avatarName) {
         if(avatarName != null) {
-            Path imagePath = Paths.get("target//classes//static//uploads" + avatarName); //"src//main//resources//static//uploads//"
+            Path imagePath = Paths.get("target//classes//static//uploads//" + avatarName); //"src//main//resources//static//uploads//"
             Resource imageResource;
             imageResource = new FileSystemResource(imagePath);
 
