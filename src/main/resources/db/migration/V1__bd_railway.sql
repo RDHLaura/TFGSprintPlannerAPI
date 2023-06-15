@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS `railway`.`projects` (
   CONSTRAINT `FKc7n80muxvf9gx2w5ae4wg0knj`
     FOREIGN KEY (`users_id`)
     REFERENCES `railway`.`users` (`id`))
-    ON DELETE no action
+
 ENGINE = InnoDB
 AUTO_INCREMENT = 4
 DEFAULT CHARACTER SET = utf8mb4
@@ -163,7 +163,7 @@ CREATE TABLE IF NOT EXISTS `railway`.`tasks` (
   CONSTRAINT `FKgv5kftowjl0g49sk17alufjon`
     FOREIGN KEY (`users_id`)
     REFERENCES `railway`.`users` (`id`))
-    ON DELETE no action
+
 ENGINE = InnoDB
 AUTO_INCREMENT = 25
 DEFAULT CHARACTER SET = utf8mb4
