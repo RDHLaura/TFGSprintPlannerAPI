@@ -24,7 +24,7 @@ public abstract class BaseDTO <T>  implements Serializable {
     private final ObjectMapper mapper;
     private final Class<T> entityType;
     private Long id;
-    @JsonFormat(pattern="yyyy-MM-dd", timezone="Europe/Madrid")
+    @JsonFormat(pattern="yyyy-MM-dd")
     private Date createDate;
 
     /**
